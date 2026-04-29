@@ -17,19 +17,19 @@ import os
 import json
 import time
 import threading
-import pytest
 import paho.mqtt.client as mqtt
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-BROKER_HOST     = os.getenv("MQTT_BROKER_HOST", "localhost")
-BROKER_PORT     = int(os.getenv("MQTT_BROKER_PORT", 1883))
+BROKER_HOST = os.getenv("MQTT_BROKER_HOST", "localhost")
+BROKER_PORT = int(os.getenv("MQTT_BROKER_PORT", 1883))
 CONNECT_TIMEOUT = 5
 MESSAGE_TIMEOUT = 5
-BASE_TOPIC      = "ci/test"
+BASE_TOPIC = "ci/test"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def make_client(client_id: str) -> mqtt.Client:
     """Create and return a connected MQTT client."""
@@ -51,12 +51,14 @@ def subscribe_and_collect(
     done = threading.Event()
 
     def on_message(client, userdata, msg):
-        received.append({
-            "topic":   msg.topic,
-            "payload": msg.payload.decode("utf-8"),
-            "qos":     msg.qos,
-            "retain":  msg.retain,
-        })
+        received.append(
+            {
+                "topic": msg.topic,
+                "payload": msg.payload.decode("utf-8"),
+                "qos": msg.qos,
+                "retain": msg.retain,
+            }
+        )
         if len(received) >= expected_count:
             done.set()
 
@@ -71,8 +73,8 @@ def subscribe_and_collect(
 
 # ── Tests: Connectivity ───────────────────────────────────────────────────────
 
-class TestConnectivity:
 
+class TestConnectivity:
     def test_connect_and_disconnect(self):
         """TC-CON-01: Client can connect and cleanly disconnect."""
         connected = threading.Event()
@@ -84,7 +86,9 @@ class TestConnectivity:
         client.on_connect = on_connect
         client.connect(BROKER_HOST, BROKER_PORT, keepalive=60)
         client.loop_start()
-        assert connected.wait(timeout=CONNECT_TIMEOUT), "Broker did not acknowledge CONNECT"
+        assert connected.wait(timeout=CONNECT_TIMEOUT), (
+            "Broker did not acknowledge CONNECT"
+        )
         client.loop_stop()
         client.disconnect()
 
@@ -94,7 +98,9 @@ class TestConnectivity:
 
         for i in range(5):
             ev = threading.Event()
-            cl = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=f"tc-con-02-{i}")
+            cl = mqtt.Client(
+                mqtt.CallbackAPIVersion.VERSION2, client_id=f"tc-con-02-{i}"
+            )
             cl.on_connect = lambda c, u, f, rc, props, ev=ev: ev.set()
             cl.connect(BROKER_HOST, BROKER_PORT)
             cl.loop_start()
@@ -111,8 +117,8 @@ class TestConnectivity:
 
 # ── Tests: Publish / Subscribe ────────────────────────────────────────────────
 
-class TestPublishSubscribe:
 
+class TestPublishSubscribe:
     def test_qos0_message_delivery(self):
         """TC-PS-01: Message published at QoS 0 is received by subscriber."""
         topic, payload = f"{BASE_TOPIC}/qos0", "hello-qos0"
@@ -193,11 +199,11 @@ class TestPublishSubscribe:
         """TC-PS-04: JSON payload is transmitted without corruption."""
         topic = f"{BASE_TOPIC}/payload-integrity"
         sensor_data = {
-            "device_id":   "sensor-001",
+            "device_id": "sensor-001",
             "temperature": 23.7,
-            "humidity":    61.2,
-            "timestamp":   1712345678,
-            "status":      "ok",
+            "humidity": 61.2,
+            "timestamp": 1712345678,
+            "status": "ok",
         }
         received, done = [], threading.Event()
         sub = make_client("tc-ps-04-sub")
@@ -223,8 +229,8 @@ class TestPublishSubscribe:
 
 # ── Tests: Retained Messages ──────────────────────────────────────────────────
 
-class TestRetainedMessages:
 
+class TestRetainedMessages:
     def test_retained_message_delivered_on_subscribe(self):
         """TC-RET-01: New subscriber receives the last retained message immediately."""
         topic, payload = f"{BASE_TOPIC}/retained", "retained-value-42"
@@ -261,8 +267,8 @@ class TestRetainedMessages:
 
 # ── Tests: Wildcards ──────────────────────────────────────────────────────────
 
-class TestWildcards:
 
+class TestWildcards:
     def test_single_level_wildcard(self):
         """TC-WILD-01: '+' matches exactly one topic level."""
         wildcard = f"{BASE_TOPIC}/sensors/+/temperature"
@@ -285,7 +291,9 @@ class TestWildcards:
         pub.publish(sensor_a, "22.1", qos=0)
         pub.publish(sensor_b, "24.3", qos=0)
 
-        assert done.wait(timeout=MESSAGE_TIMEOUT), "Wildcard did not receive both messages"
+        assert done.wait(timeout=MESSAGE_TIMEOUT), (
+            "Wildcard did not receive both messages"
+        )
         assert sensor_a in received
         assert sensor_b in received
 
@@ -295,9 +303,9 @@ class TestWildcards:
 
     def test_multi_level_wildcard(self):
         """TC-WILD-02: '#' matches all descendant topic levels."""
-        base     = f"{BASE_TOPIC}/fleet"
+        base = f"{BASE_TOPIC}/fleet"
         wildcard = f"{base}/#"
-        topics   = [
+        topics = [
             f"{base}/truck-01/gps",
             f"{base}/truck-01/fuel",
             f"{base}/truck-02/gps",
@@ -319,7 +327,9 @@ class TestWildcards:
         for t in topics:
             pub.publish(t, "data", qos=0)
 
-        assert done.wait(timeout=MESSAGE_TIMEOUT), "Multi-level wildcard missed messages"
+        assert done.wait(timeout=MESSAGE_TIMEOUT), (
+            "Multi-level wildcard missed messages"
+        )
         for t in topics:
             assert t in received
 
@@ -330,11 +340,11 @@ class TestWildcards:
 
 # ── Tests: Last Will & Testament ──────────────────────────────────────────────
 
-class TestLastWill:
 
+class TestLastWill:
     def test_last_will_delivered_on_ungraceful_disconnect(self):
         """TC-LWT-01: LWT message published when client disconnects ungracefully."""
-        lwt_topic   = f"{BASE_TOPIC}/lwt/device-offline"
+        lwt_topic = f"{BASE_TOPIC}/lwt/device-offline"
         lwt_payload = json.dumps({"status": "offline", "device": "iot-device-001"})
 
         received, done = [], threading.Event()
@@ -348,7 +358,9 @@ class TestLastWill:
         watcher.subscribe(lwt_topic, qos=1)
         time.sleep(0.2)
 
-        device = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="tc-lwt-01-device")
+        device = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2, client_id="tc-lwt-01-device"
+        )
         device.will_set(lwt_topic, lwt_payload, qos=1, retain=False)
         device.connect(BROKER_HOST, BROKER_PORT)
         device.loop_start()
@@ -367,8 +379,8 @@ class TestLastWill:
 
 # ── Tests: Message Ordering ───────────────────────────────────────────────────
 
-class TestMessageOrdering:
 
+class TestMessageOrdering:
     def test_message_ordering_qos1(self):
         """TC-ORD-01: Messages arrive in published order at QoS 1."""
         topic, count = f"{BASE_TOPIC}/ordering", 20

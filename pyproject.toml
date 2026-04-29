@@ -8,9 +8,14 @@ dependencies = [
     "paho-mqtt>=2.1.0",
     "pytest>=8.3.4",
     "pytest-timeout>=2.3.1",
+    "ruff>=0.15.12",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 timeout = 30
 addopts = "-v --tb=short"
+
+[project.scripts]
+format = "ruff:format"
+lint = "ruff:check"
