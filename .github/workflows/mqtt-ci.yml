@@ -78,7 +78,7 @@ jobs:
     needs: provision
     permissions:
       checks: write
-      pull-pull_requests: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
 
