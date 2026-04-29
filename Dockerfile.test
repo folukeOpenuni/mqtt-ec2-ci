@@ -1,0 +1,15 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+#install dependencies
+COPY pyproject.toml .
+RUN pip install --no-cache-dir paho-mqtt pytest pytest-timeout
+
+# copy test suit
+COPY tests/ ./tests/
+
+#create reports directory
+RUN mkdir -p reports
+
+CMD [ "pytest", "tests/", "--junitxml=reports/results.xml", "-v" ]

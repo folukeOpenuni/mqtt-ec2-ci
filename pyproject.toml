@@ -1,0 +1,16 @@
+[project]
+name = "mqtt-ec2-ci"
+version = "0.1.0"
+description = "Automated MQTT protocol testing with GitHub Actions + Terraform + AWS EC2"
+requires-python = ">=3.12"
+
+dependencies = [
+    "paho-mqtt>=2.1.0",
+    "pytest>=8.3.4",
+    "pytest-timeout>=2.3.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+timeout = 30
+addopts = "-v --tb=short"
