@@ -73,7 +73,6 @@ def subscribe_and_collect(
 
 # ── Tests: Connectivity ───────────────────────────────────────────────────────
 
-
 class TestConnectivity:
     def test_connect_and_disconnect(self):
         """TC-CON-01: Client can connect and cleanly disconnect."""
@@ -116,7 +115,6 @@ class TestConnectivity:
 
 
 # ── Tests: Publish / Subscribe ────────────────────────────────────────────────
-
 
 class TestPublishSubscribe:
     def test_qos0_message_delivery(self):
@@ -228,7 +226,6 @@ class TestPublishSubscribe:
 
 
 # ── Tests: Retained Messages ──────────────────────────────────────────────────
-
 
 class TestRetainedMessages:
     def test_retained_message_delivered_on_subscribe(self):
